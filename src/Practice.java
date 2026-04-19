@@ -1,3 +1,7 @@
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,7 +29,22 @@ public class Practice {
    * @return the number of vertices with odd values reachable from the starting vertex
    */
   public static int oddVertices(Vertex<Integer> starting) {
-    return 0;
+    return oddVerticies(starting, new HashSet<Integer>());
+  }
+
+  public static int oddVerticies(Vertex<Integer> starting,  Set<Integer> visited) {
+    if(starting == null) return 0;
+
+    int count = 0;
+    if(starting.data % 2 != 0) {
+      count++;
+    }
+
+
+    for(Vertex<Integer> neighbor : starting.neighbors) {
+      count += oddVerticies(neighbor, visited);
+    }
+    return count;
   }
 
   /**
@@ -47,7 +66,26 @@ public class Practice {
    * @return a sorted list of all reachable vertex values by 
    */
   public static List<Integer> sortedReachable(Vertex<Integer> starting) {
-    return null;
+    List<Integer> reachable = new ArrayList<>();
+    Set<Vertex<Integer>> visited = new HashSet<>();
+
+    sortedReachable(starting, visited, reachable);
+
+    Collections.sort(reachable);
+    return reachable;
+    
+  }
+
+  public static void sortedReachable(Vertex<Integer> starting, Set<Vertex<Integer>> visited, List<Integer> reachable) {
+    if(starting == null || visited.contains(starting)) return;
+
+    visited.add(starting);
+
+    reachable.add(starting.data);
+
+    for(Vertex<Integer> neighbor : starting.neighbors) {
+      sortedReachable(neighbor, visited, reachable);
+    }
   }
 
   /**
@@ -61,7 +99,27 @@ public class Practice {
    * @return a sorted list of all reachable vertex values
    */
   public static List<Integer> sortedReachable(Map<Integer, Set<Integer>> graph, int starting) {
-    return null;
+    List<Integer> reachable = new ArrayList<>();
+    Set<Integer> visited = new HashSet<>();
+
+    if(graph == null || !graph.containsKey(starting)) return reachable;
+
+    sortedReachable(graph, starting, visited, reachable);
+
+    Collections.sort(reachable);
+    return reachable;
+  }
+
+  public static void sortedReachable(Map<Integer, Set<Integer>> graph, int starting, Set<Integer> visited, List<Integer> reachable){
+    if(graph == null) return;
+
+    if(visited.contains(starting)) return;
+    visited.add(starting);
+    reachable.add(starting);
+
+    for(Integer neighbor : graph.get(starting)){
+      sortedReachable(graph, neighbor, visited, reachable);
+    }
   }
 
   /**
