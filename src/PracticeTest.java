@@ -997,4 +997,283 @@ public class PracticeTest {
     Set<String> actual = toSet(result);
     assertEquals(Collections.singleton("1,1"), actual);
   }
+
+  // -----------------------------------------------------------------------
+  // --- Tests for countReachable(Vertex<Integer> starting) ---
+  // -----------------------------------------------------------------------
+
+  @Test
+  public void testCountReachable_NullInput() {
+    // Null starting vertex should return 0.
+    assertEquals(0, Practice.countReachable(null));
+  }
+
+  @Test
+  public void testCountReachable_SingleNode() {
+    // A single vertex with no neighbors counts as 1.
+    Vertex<Integer> v = new Vertex<>(42);
+    assertEquals(1, Practice.countReachable(v));
+  }
+
+  @Test
+  public void testCountReachable_SimpleGraph() {
+    // Graph:
+    //   1 --> 2
+    //   |     |
+    //   v     v
+    //   3 --> 4
+    // All four vertices are reachable from 1.
+    Vertex<Integer> v1 = new Vertex<>(1);
+    Vertex<Integer> v2 = new Vertex<>(2);
+    Vertex<Integer> v3 = new Vertex<>(3);
+    Vertex<Integer> v4 = new Vertex<>(4);
+    v1.neighbors.add(v2);
+    v1.neighbors.add(v3);
+    v2.neighbors.add(v4);
+    v3.neighbors.add(v4);
+    assertEquals(4, Practice.countReachable(v1));
+  }
+
+  @Test
+  public void testCountReachable_Cycle() {
+    // Cycle of three vertices: all three are reachable but each visited once.
+    Vertex<Integer> v1 = new Vertex<>(1);
+    Vertex<Integer> v2 = new Vertex<>(2);
+    Vertex<Integer> v3 = new Vertex<>(3);
+    v1.neighbors.add(v2);
+    v2.neighbors.add(v3);
+    v3.neighbors.add(v1);
+    assertEquals(3, Practice.countReachable(v1));
+  }
+
+  @Test
+  public void testCountReachable_DisconnectedIgnored() {
+    // v1 -> v2; v3 is isolated. Only 2 vertices reachable from v1.
+    Vertex<Integer> v1 = new Vertex<>(1);
+    Vertex<Integer> v2 = new Vertex<>(2);
+    Vertex<Integer> v3 = new Vertex<>(3);
+    v1.neighbors.add(v2);
+    // v3 not connected.
+    assertEquals(2, Practice.countReachable(v1));
+  }
+
+  @Test
+  public void testCountReachable_ComplexGraph() {
+    // Using the complex graph (9 vertices reachable from v3; v67 is isolated).
+    Vertex<Integer>[] vertices = createComplexGraph();
+    assertEquals(9, Practice.countReachable(vertices[0]));
+  }
+
+  // -----------------------------------------------------------------------
+  // --- Tests for maxValue(Vertex<Integer> starting) ---
+  // -----------------------------------------------------------------------
+
+  @Test
+  public void testMaxValue_NullInput() {
+    // Null input should return Integer.MIN_VALUE.
+    assertEquals(Integer.MIN_VALUE, Practice.maxValue(null));
+  }
+
+  @Test
+  public void testMaxValue_SingleNode() {
+    // Single vertex; max is its own value.
+    Vertex<Integer> v = new Vertex<>(7);
+    assertEquals(7, Practice.maxValue(v));
+  }
+
+  @Test
+  public void testMaxValue_SimpleGraph() {
+    // Graph:
+    //   3 --> 8
+    //   |     |
+    //   v     v
+    //   5 --> 1
+    // Reachable values: 3, 8, 5, 1. Max = 8.
+    Vertex<Integer> v3 = new Vertex<>(3);
+    Vertex<Integer> v8 = new Vertex<>(8);
+    Vertex<Integer> v5 = new Vertex<>(5);
+    Vertex<Integer> v1 = new Vertex<>(1);
+    v3.neighbors.add(v8);
+    v3.neighbors.add(v5);
+    v8.neighbors.add(v1);
+    v5.neighbors.add(v1);
+    assertEquals(8, Practice.maxValue(v3));
+  }
+
+  @Test
+  public void testMaxValue_MaxAtStart() {
+    // Starting vertex has the largest value.
+    Vertex<Integer> v10 = new Vertex<>(10);
+    Vertex<Integer> v2  = new Vertex<>(2);
+    Vertex<Integer> v4  = new Vertex<>(4);
+    v10.neighbors.add(v2);
+    v10.neighbors.add(v4);
+    assertEquals(10, Practice.maxValue(v10));
+  }
+
+  @Test
+  public void testMaxValue_Cycle() {
+    // Cycle: 4 -> 9 -> 2 -> 4. Max = 9.
+    Vertex<Integer> v4 = new Vertex<>(4);
+    Vertex<Integer> v9 = new Vertex<>(9);
+    Vertex<Integer> v2 = new Vertex<>(2);
+    v4.neighbors.add(v9);
+    v9.neighbors.add(v2);
+    v2.neighbors.add(v4);
+    assertEquals(9, Practice.maxValue(v4));
+  }
+
+  @Test
+  public void testMaxValue_ComplexGraph() {
+    // Complex graph reachable from v3: values 3,7,12,34,45,56,78,91,23. Max = 91.
+    Vertex<Integer>[] vertices = createComplexGraph();
+    assertEquals(91, Practice.maxValue(vertices[0]));
+  }
+
+  // -----------------------------------------------------------------------
+  // --- Tests for hasPath(Map<Integer, Set<Integer>> graph, int starting, int ending) ---
+  // -----------------------------------------------------------------------
+
+  @Test
+  public void testHasPath_StartingNotInGraph() {
+    // Starting vertex absent from the graph => false.
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(1, new HashSet<>(Arrays.asList(2)));
+    graph.put(2, new HashSet<>());
+    assertFalse(Practice.hasPath(graph, 5, 2));
+  }
+
+  @Test
+  public void testHasPath_SelfPath() {
+    // A vertex can always reach itself.
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(3, new HashSet<>());
+    assertTrue(Practice.hasPath(graph, 3, 3));
+  }
+
+  @Test
+  public void testHasPath_DirectEdge() {
+    // 1 -> 2; direct path exists.
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(1, new HashSet<>(Arrays.asList(2)));
+    graph.put(2, new HashSet<>());
+    assertTrue(Practice.hasPath(graph, 1, 2));
+  }
+
+  @Test
+  public void testHasPath_NegativeVertexAllowed() {
+    // Path goes through a negative vertex: 1 -> -3 -> 4.
+    // Unlike positivePathExists, this should still return true.
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(1,  new HashSet<>(Arrays.asList(-3)));
+    graph.put(-3, new HashSet<>(Arrays.asList(4)));
+    graph.put(4,  new HashSet<>());
+    assertTrue(Practice.hasPath(graph, 1, 4));
+  }
+
+  @Test
+  public void testHasPath_NoPathExists() {
+    // Two disconnected components: 1->2 and 3->4.
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(1, new HashSet<>(Arrays.asList(2)));
+    graph.put(2, new HashSet<>());
+    graph.put(3, new HashSet<>(Arrays.asList(4)));
+    graph.put(4, new HashSet<>());
+    assertFalse(Practice.hasPath(graph, 1, 4));
+  }
+
+  @Test
+  public void testHasPath_Cycle() {
+    // Cycle: 1 -> 2 -> 3 -> 1. Can reach any node from any node.
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(1, new HashSet<>(Arrays.asList(2)));
+    graph.put(2, new HashSet<>(Arrays.asList(3)));
+    graph.put(3, new HashSet<>(Arrays.asList(1)));
+    assertTrue(Practice.hasPath(graph, 1, 3));
+    assertTrue(Practice.hasPath(graph, 3, 2));
+  }
+
+  @Test
+  public void testHasPath_EndingNotInGraph() {
+    // Ending vertex is not a key; path cannot lead there.
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(1, new HashSet<>(Arrays.asList(2)));
+    graph.put(2, new HashSet<>());
+    assertFalse(Practice.hasPath(graph, 1, 99));
+  }
+
+  // -----------------------------------------------------------------------
+  // --- Tests for networkSize(Professional person) ---
+  // -----------------------------------------------------------------------
+
+  @Test
+  public void testNetworkSize_NullInput() {
+    // Null person should return 0.
+    assertEquals(0, Practice.networkSize(null));
+  }
+
+  @Test
+  public void testNetworkSize_SinglePerson() {
+    // A professional with no connections counts as 1.
+    Professional alice = new Professional("Alice", "Acme", 5, new HashSet<>());
+    assertEquals(1, Practice.networkSize(alice));
+  }
+
+  @Test
+  public void testNetworkSize_DirectConnections() {
+    // Alice is directly connected to Bob and Carol. Total = 3.
+    Professional bob   = new Professional("Bob",   "Acme", 3, new HashSet<>());
+    Professional carol = new Professional("Carol", "Acme", 4, new HashSet<>());
+    Professional alice = new Professional("Alice", "Acme", 5,
+        new HashSet<>(Arrays.asList(bob, carol)));
+    assertEquals(3, Practice.networkSize(alice));
+  }
+
+  @Test
+  public void testNetworkSize_IndirectConnections() {
+    // Chain: Alice -> Bob -> Carol -> Dave. Total = 4.
+    Professional dave  = new Professional("Dave",  "Acme", 2, new HashSet<>());
+    Professional carol = new Professional("Carol", "Acme", 3, new HashSet<>(Arrays.asList(dave)));
+    Professional bob   = new Professional("Bob",   "Acme", 4, new HashSet<>(Arrays.asList(carol)));
+    Professional alice = new Professional("Alice", "Acme", 5, new HashSet<>(Arrays.asList(bob)));
+    assertEquals(4, Practice.networkSize(alice));
+  }
+
+  @Test
+  public void testNetworkSize_Cycle() {
+    // Cycle: A -> B -> C -> A. Should count each person once => 3.
+    Professional a = new Professional("A", "Acme", 1, new HashSet<>());
+    Professional b = new Professional("B", "Acme", 2, new HashSet<>());
+    Professional c = new Professional("C", "Acme", 3, new HashSet<>());
+    a.getConnections().add(b);
+    b.getConnections().add(c);
+    c.getConnections().add(a);
+    assertEquals(3, Practice.networkSize(a));
+  }
+
+  @Test
+  public void testNetworkSize_BranchedNetwork() {
+    // Network:
+    //   Alice -> {Bob, Carol}
+    //   Bob   -> {Dave}
+    //   Carol -> {Dave, Eve}
+    //   Dave  -> {}
+    //   Eve   -> {}
+    // Total unique professionals = 5.
+    Professional dave  = new Professional("Dave",  "Acme", 3, new HashSet<>());
+    Professional eve   = new Professional("Eve",   "Acme", 2, new HashSet<>());
+    Professional bob   = new Professional("Bob",   "Acme", 5, new HashSet<>(Arrays.asList(dave)));
+    Professional carol = new Professional("Carol", "Acme", 4, new HashSet<>(Arrays.asList(dave, eve)));
+    Professional alice = new Professional("Alice", "Acme", 6,
+        new HashSet<>(Arrays.asList(bob, carol)));
+    assertEquals(5, Practice.networkSize(alice));
+  }
+
+  @Test
+  public void testNetworkSize_SelfLoop() {
+    // A professional connected to themselves; should still count as 1.
+    Professional alice = new Professional("Alice", "Acme", 5, new HashSet<>());
+    alice.getConnections().add(alice);
+    assertEquals(1, Practice.networkSize(alice));
+  }
 }

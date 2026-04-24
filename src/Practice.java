@@ -300,4 +300,90 @@ public class Practice {
     
     return results;
   }
+
+  /* THIS IS ALL THE GENERATED QUESTIONS FOR EXTRA PRACTICE */
+
+  /**
+   * Returns the total number of vertices reachable from the starting vertex,
+   * including the starting vertex itself.
+   * If the starting vertex is null, returns 0.
+   *
+   * Example:
+   * Consider a graph where:
+   *   1 --> 2
+   *   |     |
+   *   v     v
+   *   3 --> 4
+   *
+   * Starting from 1, all reachable vertices are 1, 2, 3, and 4.
+   * Thus, the count is 4.
+   *
+   * @param starting the starting vertex (may be null)
+   * @return the total number of reachable vertices
+   */
+  public static int countReachable(Vertex<Integer> starting) {
+    return 0;
+  }
+
+  /**
+   * Returns the maximum integer value among all vertices reachable from the
+   * starting vertex, including the starting vertex itself.
+   * If the starting vertex is null, returns Integer.MIN_VALUE.
+   *
+   * Example:
+   * Consider a graph where:
+   *   3 --> 8
+   *   |     |
+   *   v     v
+   *   5 --> 1
+   *
+   * Starting from 3, the reachable values are 3, 8, 5, and 1.
+   * The maximum value is 8.
+   *
+   * @param starting the starting vertex (may be null)
+   * @return the maximum value among all reachable vertices, or Integer.MIN_VALUE if null
+   */
+  public static int maxValue(Vertex<Integer> starting) {
+    return Integer.MIN_VALUE;
+  }
+
+  /**
+   * Returns true if there is any path from starting to ending in the graph.
+   * Unlike positivePathExists, all vertex values are permitted on the path.
+   * A vertex is always considered reachable from itself.
+   * If starting is not present as a key in the graph, returns false.
+   *
+   * Example:
+   * Graph:
+   *   1 -> {2}
+   *   2 -> {-3}
+   *   -3 -> {4}
+   *   4 -> {}
+   *
+   * hasPath(graph, 1, 4) returns true even though -3 is on the path.
+   *
+   * @param graph a map representing the graph
+   * @param starting the starting vertex value
+   * @param ending the ending vertex value
+   * @return true if a path exists from starting to ending, false otherwise
+   */
+  public static boolean hasPath(Map<Integer, Set<Integer>> graph, int starting, int ending) {
+    return false;
+  }
+
+  /**
+   * Returns the total number of unique professionals reachable in the extended
+   * network starting from the given person, including the person themselves.
+   * If person is null, returns 0.
+   *
+   * Example:
+   * If Alice is directly connected to Bob and Carol, and Carol is connected to Dave,
+   * then networkSize(Alice) = 4 (Alice, Bob, Carol, Dave).
+   *
+   * @param person the professional to start from (may be null)
+   * @return the count of unique professionals in the extended network
+   */
+  public static int networkSize(Professional person) {
+    return 0;
+  }
 }
