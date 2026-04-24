@@ -67,25 +67,21 @@ public class Practice {
    * @return a sorted list of all reachable vertex values by 
    */
   public static List<Integer> sortedReachable(Vertex<Integer> starting) {
-    List<Integer> reachable = new ArrayList<>();
-    Set<Vertex<Integer>> visited = new HashSet<>();
-
-    sortedReachable(starting, visited, reachable);
-
-    Collections.sort(reachable);
-    return reachable;
+    List<Integer> numbers = new ArrayList<>();
+    Set<Vertex<Integer>> seen = new HashSet<>();
     
+    dfs(starting, seen, numbers);
+
+    Collections.sort(numbers);
+    return numbers;
   }
 
-  public static void sortedReachable(Vertex<Integer> starting, Set<Vertex<Integer>> visited, List<Integer> reachable) {
-    if(starting == null || visited.contains(starting)) return;
-
-    visited.add(starting);
-
-    reachable.add(starting.data);
-
-    for(Vertex<Integer> neighbor : starting.neighbors) {
-      sortedReachable(neighbor, visited, reachable);
+  private static void dfs(Vertex<Integer> starting, Set<Vertex<Integer>> seen, List<Integer> numbers){
+    if(starting == null) return;
+    seen.add(starting);
+    numbers.add(starting.data);
+    for(Vertex<Integer> neighbor : starting.neighbors){
+      dfs(neighbor, seen, numbers);
     }
   }
 
@@ -356,7 +352,26 @@ public class Practice {
    * @return the maximum value among all reachable vertices, or Integer.MIN_VALUE if null
    */
   public static int maxValue(Vertex<Integer> starting) {
-    return Integer.MIN_VALUE;
+    Set<Vertex<Integer>> seen = new HashSet<>();
+    int high = maxValue(starting, seen, Integer.MIN_VALUE);
+
+    return high;
+  }
+
+  public static int maxValue(Vertex<Integer> starting, Set<Vertex<Integer>> seen, int highestValue){
+    if(starting == null || seen.contains(starting)) return Integer.MIN_VALUE;
+
+    seen.add(starting);
+
+    if(highestValue < starting.data){
+      highestValue = starting.data;
+    }
+
+    for(Vertex<Integer> neighbor : starting.neighbors){
+      highestValue = Math.max(highestValue, maxValue(neighbor, seen, highestValue));
+    }
+
+    return highestValue;
   }
 
   /**
@@ -380,6 +395,20 @@ public class Practice {
    * @return true if a path exists from starting to ending, false otherwise
    */
   public static boolean hasPath(Map<Integer, Set<Integer>> graph, int starting, int ending) {
+    if(!graph.containsKey(starting)) return false;
+    Set<Integer> seen = new HashSet<>();
+    return bfs(graph, starting, ending, seen);
+  }
+
+  public static boolean bfs(Map<Integer, Set<Integer>> graph, int current, int target, Set<Integer> seen){
+    if(current == target) return true;
+    if(graph == null || seen.contains(current)) return false;
+
+    seen.add(current);
+
+    for(int neighbor : graph.get(current)){
+      if(bfs(graph, neighbor, target, seen)) return true;
+    }
     return false;
   }
 
