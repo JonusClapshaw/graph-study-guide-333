@@ -322,7 +322,20 @@ public class Practice {
    * @return the total number of reachable vertices
    */
   public static int countReachable(Vertex<Integer> starting) {
-    return 0;
+    Set<Integer> seen = new HashSet<>();
+    return countReachable(starting, seen);
+  }
+
+  public static int countReachable(Vertex<Integer> starting, Set<Integer> seen){
+    if(starting == null || starting == seen) return 0;
+
+    seen.add(starting.data);
+
+    for(Vertex<Integer> neighbor : starting.neighbors){
+      countReachable(neighbor, seen);
+    }
+
+    return seen.size();
   }
 
   /**
