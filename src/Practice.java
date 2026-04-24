@@ -29,20 +29,21 @@ public class Practice {
    * @return the number of vertices with odd values reachable from the starting vertex
    */
   public static int oddVertices(Vertex<Integer> starting) {
-    return oddVerticies(starting, new HashSet<Integer>());
+    Set<Vertex<Integer>> seen = new HashSet<>();
+    return oddVertices(starting, seen, 0);
   }
 
-  public static int oddVerticies(Vertex<Integer> starting,  Set<Integer> visited) {
-    if(starting == null) return 0;
+  private static int oddVertices(Vertex<Integer> starting, Set<Vertex<Integer>> seen, int count){
+    if(starting == null || seen.contains(starting)) return count;
 
-    int count = 0;
+    seen.add(starting);
+
     if(starting.data % 2 != 0) {
       count++;
     }
 
-
-    for(Vertex<Integer> neighbor : starting.neighbors) {
-      count += oddVerticies(neighbor, visited);
+    for(Vertex<Integer> cur : starting.neighbors){
+      count = oddVertices(cur, seen, count);
     }
     return count;
   }
@@ -137,6 +138,22 @@ public class Practice {
    * @return true if there is a two-way connection between v1 and v2, false otherwise
    */
   public static <T> boolean twoWay(Vertex<T> v1, Vertex<T> v2) {
+    if(v1 == null || v2 == null) return false;
+    if(v1 == v2) return true;
+
+    return twoWay(v1, new HashSet<>(), v2) && twoWay(v2, new HashSet<>(), v1);
+  }
+
+  public static <T> boolean twoWay(Vertex<T> current, Set<Vertex<T>> seen, Vertex<T> target){
+    if(current == null || seen.contains(current)) return false;
+    if(current == target) return true;
+
+    seen.add(current);
+
+    for(Vertex<T> neighbor : current.neighbors){
+      if(twoWay(neighbor, seen, target)) return true;
+    }
+
     return false;
   }
 
@@ -153,6 +170,24 @@ public class Practice {
    * @return whether there exists a valid positive path from starting to ending
    */
   public static boolean positivePathExists(Map<Integer, Set<Integer>> graph, int starting, int ending) {
+    if(graph == null || !graph.containsKey(starting)) return false;
+  
+    return positivePathExists(graph, starting, ending, new HashSet<>());
+  }
+
+  public static boolean positivePathExists(Map<Integer, Set<Integer>> graph, int starting, int ending, Set<Integer> seen){
+    if(graph == null) return false;
+    if(seen.contains(starting)) return false;
+    if(starting <= 0) return false;
+
+    seen.add(starting);
+
+    if(starting == ending) return true;
+
+    for(int neighbor : graph.get(starting)){
+      if(positivePathExists(graph, neighbor, ending, seen)) return true;
+    }
+
     return false;
   }
 
@@ -166,6 +201,19 @@ public class Practice {
    * @return true if a person in the extended network works at the specified company, false otherwise
    */
   public static boolean hasExtendedConnectionAtCompany(Professional person, String companyName) {
+    Set<String> seen = new HashSet<>();
+    return hasExtendedConnectionAtCompany(person, companyName, seen);
+  }
+
+  public static boolean hasExtendedConnectionAtCompany(Professional person, String companyName, Set<String> seen) {
+    if(person == null || person.getConnections() == null) return false;
+    if(seen.contains(person.getName())) return false;
+    if(person.getCompany().equals(companyName)) return true;
+    seen.add(person.getName());
+
+    for(Professional per : person.getConnections()){
+      if(hasExtendedConnectionAtCompany(per, companyName, seen)) return true;
+    }
     return false;
   }
 
@@ -237,6 +285,19 @@ public class Practice {
    * @return an unsorted list of next moves
    */
   public static List<int[]> nextMoves(char[][] board, int[] current, int[][] directions) {
-    return null;
+    ArrayList<int[]> results = new ArrayList<>(); 
+
+    for(int[] direction : directions){
+      int newR = current[0] + direction[0];
+      int newC = current[1] + direction[1];
+
+      if(newR >= 0 && newC >= 0 && newR < board.length && newC < board[0].length){
+        if(board[newR][newC] != 'X'){
+          results.add(new int[]{newR, newC});
+        }
+      }
+    }
+    
+    return results;
   }
 }
