@@ -1,9 +1,11 @@
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 
 public class Practice {
@@ -426,5 +428,355 @@ public class Practice {
    */
   public static int networkSize(Professional person) {
     return 0;
+  }
+
+  /**
+   * Returns the sum of all reachable vertex values from the starting vertex,
+   * including the starting vertex itself.
+   *
+   * If the graph contains cycles, each vertex should only be counted once.
+   * If starting is null, returns 0.
+   *
+   * Example:
+   *   2 -> 5
+   *   |    |
+   *   v    v
+   *   3 -> 7
+   * Sum from 2 is 2 + 5 + 3 + 7 = 17.
+   *
+   * @param starting the starting vertex (may be null)
+   * @return the sum of unique reachable vertex values
+   */
+  public static int sumReachable(Vertex<Integer> starting) {
+    Set<Vertex<Integer>> seen = new HashSet<>();
+    int sum = 0;
+    sum = dfs(starting, seen);
+    return sum;
+  }
+
+  public static int dfs(Vertex<Integer> starting, Set<Vertex<Integer>> seen){
+    if(starting == null || seen.contains(starting)) return 0;
+
+    seen.add(starting);
+    int sum = starting.data;
+
+    for(Vertex<Integer> neighbor : starting.neighbors){
+      sum += dfs(neighbor, seen);
+    }
+    return sum;
+  }
+
+  /**
+   * Returns true if every vertex reachable from starting has a non-negative value.
+   * A value of 0 is considered non-negative.
+   *
+   * If graph is null or starting is not present as a key in graph, returns false.
+   *
+   * Example:
+   *   1 -> {2, 0}
+   *   2 -> {3}
+   *   0 -> {}
+   *   3 -> {}
+   * allReachableNonNegative(graph, 1) is true.
+   *
+   * @param graph a map representing the graph
+   * @param starting the starting vertex value
+   * @return true if all reachable vertices are non-negative, false otherwise
+   */
+  public static boolean allReachableNonNegative(Map<Integer, Set<Integer>> graph, int starting) {
+    if(graph == null || !graph.containsKey(starting)) return false;
+    Set<Integer> seen = new HashSet<>();
+    return allReachableNonNegative(graph, starting, seen);
+  }
+
+  public static boolean allReachableNonNegative(Map<Integer, Set<Integer>> graph, int current, Set<Integer> seen){
+    if(seen.contains(current)) return false;
+    if(current < 0) return false;
+
+    seen.add(current);
+
+    for(int cur : graph.getOrDefault(current, Collections.emptySet())){
+      if(!allReachableNonNegative(graph, cur, seen)) return false;
+    }
+      
+    return true;
+  }
+
+  /**
+   * Returns the minimum number of edges in any path from starting to ending.
+   *
+   * If starting equals ending and starting exists in the graph, return 0.
+   * If no path exists, or starting is not present as a key, return -1.
+   *
+   * Example:
+   *   1 -> {2, 3}
+   *   2 -> {4}
+   *   3 -> {4}
+   *   4 -> {}
+   * shortestPathLength(graph, 1, 4) is 2.
+   *
+   * @param graph a map representing the graph
+   * @param starting the starting vertex value
+   * @param ending the ending vertex value
+   * @return minimum edge count from starting to ending, or -1 if unreachable
+   */
+  public static int shortestPathLength(Map<Integer, Set<Integer>> graph, int starting, int ending) {
+    if(graph == null || !graph.containsKey(starting)) return -1;
+    if(starting == ending) return 0;
+
+    Queue<Integer> queue = new LinkedList<>();
+    Set<Integer> seen = new HashSet<>();
+
+    queue.offer(starting);
+    seen.add(starting);
+
+    int size = 0;
+
+    while(!queue.isEmpty()){
+      int dis = queue.size();
+      for(int i = 0; i < dis; i++){
+        int cur = queue.poll();
+
+        if(cur == ending) return size;
+
+        for(int neighbor : graph.get(cur)){
+          if(!seen.contains(neighbor)){
+            queue.offer(neighbor);
+            seen.add(neighbor);
+          }
+        }
+      }
+      size++;
+    }
+
+    return -1;
+  }
+
+  /**
+   * Returns the minimum integer value among all vertices reachable from the
+   * starting vertex, including the starting vertex itself.
+   * If the starting vertex is null, returns Integer.MAX_VALUE.
+   *
+   * Example:
+   *   6 --> 2
+   *   |     |
+   *   v     v
+   *   9 --> 4
+   * Starting from 6, reachable values are 6, 2, 9, and 4. Minimum is 2.
+   *
+   * @param starting the starting vertex (may be null)
+   * @return the minimum value among all reachable vertices, or Integer.MAX_VALUE if null
+   */
+  public static int minValue(Vertex<Integer> starting) {
+    int min = Integer.MAX_VALUE;
+    return minValue(starting, new HashSet<>(), min);
+  }
+
+  public static int minValue(Vertex<Integer> starting, Set<Vertex<Integer>> seen, int min){
+    if(starting == null || seen.contains(starting)) return min;
+
+    seen.add(starting);
+
+    if(starting.data < min){
+      min = starting.data;
+    }
+
+    for(Vertex<Integer> cur : starting.neighbors){
+      min = minValue(cur, seen, min);
+    }
+
+    return min;
+  }
+
+  /**
+   * Returns the count of vertices with even values reachable from the starting vertex,
+   * including the starting vertex if its value is even.
+   * If the starting vertex is null, returns 0.
+   *
+   * Example:
+   *   2 --> 5
+   *   |     |
+   *   v     v
+   *   8 --> 3
+   *          |
+   *          v
+   *          6
+   * Even vertices reachable from 2 are: 2, 8, and 6. Count is 3.
+   *
+   * @param starting the starting vertex (may be null)
+   * @return the count of reachable vertices with even values
+   */
+  public static int evenVertices(Vertex<Integer> starting) {
+    return evenVerticies(starting, new HashSet<>(), 0);
+  }
+
+  public static int evenVerticies(Vertex<Integer> starting, Set<Vertex<Integer>> seen, int count){
+    if(seen.contains(starting) || starting == null) return count;
+
+    seen.add(starting);
+
+    if(starting.data % 2 == 0) {
+      count++;
+    }
+
+    for(Vertex<Integer> num : starting.neighbors){
+      count = evenVerticies(num, seen, count);
+    }
+    return count;
+  }
+
+  /**
+   * Returns true if the target value is reachable from starting in the graph.
+   * The starting vertex itself is considered reachable.
+   * If graph is null or starting is not present as a key, returns false.
+   *
+   * Example:
+   *   1 -> {2, 3}
+   *   2 -> {4}
+   *   3 -> {}
+   *   4 -> {}
+   * containsReachable(graph, 1, 4) is true.
+   * containsReachable(graph, 1, 99) is false.
+   *
+   * @param graph a map representing the graph
+   * @param starting the starting vertex value
+   * @param target the value to search for
+   * @return true if target is reachable from starting
+   */
+  public static boolean containsReachable(Map<Integer, Set<Integer>> graph, int starting, int target) {
+    if(graph == null || !graph.containsKey(starting)) return false;
+
+    Set<Integer> seen = new HashSet<>();
+
+    return containsReachable(graph, starting, target, seen);
+  }
+
+  public static boolean containsReachable(Map<Integer, Set<Integer>> graph, int starting, int target, Set<Integer> seen){
+    if(seen.contains(starting)) return false;
+    if(starting == target) return true;
+
+    seen.add(starting);
+
+    for(int neighbor : graph.get(starting)){
+      if(containsReachable(graph, neighbor, target)) return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Returns the count of vertices with values above the given threshold that can be reached
+   * from the starting vertex, including the starting vertex if its value is above the threshold.
+   * If the starting vertex is null, returns 0.
+   *
+   * Example:
+   *   10 --> 5
+   *   |      |
+   *   v      v
+   *   8 --> 3
+   * Starting from 10, vertices with value > 6 are: 10 and 8. Count is 2.
+   *
+   * @param starting the starting vertex (may be null)
+   * @param threshold the threshold value
+   * @return the count of reachable vertices with values > threshold
+   */
+  public static int countVerticesAboveThreshold(Vertex<Integer> starting, int threshold) {
+    Set<Vertex<Integer>> seen = new HashSet<>();
+    return countVerticesAboveThreshold(starting, threshold, seen, 0);
+  }
+
+  public static int countVerticesAboveThreshold(Vertex<Integer> starting, int threshold, Set<Vertex<Integer>> seen, int count){
+    if(starting == null || seen.contains(starting)) return count;
+
+    seen.add(starting);
+
+    if(starting.data > threshold){
+      count++;
+    }
+
+    for(Vertex<Integer> val : starting.neighbors){
+      count = countVerticesAboveThreshold(val, threshold, seen, count);
+    }
+
+    return count;
+  }
+
+  /**
+   * Returns true if all vertices reachable from starting have even values.
+   * Returns true if the starting vertex is null.
+   * Returns false if any reachable vertex has an odd value.
+   *
+   * Example:
+   *   2 --> 4
+   *   |     |
+   *   v     v
+   *   6 --> 8
+   * Starting from 2, all reachable vertices (2, 4, 6, 8) are even. Result is true.
+   *
+   * Example 2:
+   *   2 --> 3
+   *   |     |
+   *   v     v
+   *   4 --> 8
+   * Starting from 2, vertex 3 is odd and reachable. Result is false.
+   *
+   * @param starting the starting vertex (may be null)
+   * @return true if all reachable vertices are even, false otherwise
+   */
+  public static boolean allReachableEven(Vertex<Integer> starting) {
+    Set<Integer> seen = new HashSet<>();
+    return allReachableEven(starting, seen);
+  }
+
+  private static boolean allReachableEven(Vertex<Integer> starting, Set<Integer> seen){
+    if(starting == null) return true;
+    if(seen.contains(starting.data)) return false;
+
+    seen.add(starting.data);
+
+    if(starting.data % 2 != 0) return false;
+    
+    int num = starting.data;
+
+    for(Vertex<Integer> cur: starting.neighbors){
+      if(!allReachableEven(cur, seen)) return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Returns the maximum sum of any single path starting from starting.
+   * The path includes the starting vertex value and is the sum of one continuous path downward.
+   * If the starting vertex is null, returns 0.
+   *
+   * Example:
+   *   5 --> 3 --> 8
+   *         |
+   *         v
+   *         2 --> 1
+   * Paths from 5: 5->3->8 (sum=16), 5->3->2->1 (sum=11)
+   * Maximum path sum is 16.
+   *
+   * @param starting the starting vertex (may be null)
+   * @return the maximum path sum from the starting vertex
+   */
+  public static int maxPathSum(Vertex<Integer> starting) {
+    return maxPathSum(starting, new HashSet<>(), 0);
+  }
+
+  public static int maxPathSum(Vertex<Integer> starting, Set<Vertex<Integer>> seen, int maxSum) {
+    if(starting == null || seen.contains(starting)) return 0;
+
+    seen.add(starting);
+
+    int bestChildPath = 0;
+    for(Vertex<Integer> cur : starting.neighbors){
+      int childPath = maxPathSum(cur, seen, maxSum);
+      bestChildPath = Math.max(bestChildPath, childPath);
+    }
+
+    seen.remove(starting);
+    return starting.data + bestChildPath;
   }
 }

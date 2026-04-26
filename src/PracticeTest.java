@@ -1276,4 +1276,624 @@ public class PracticeTest {
     alice.getConnections().add(alice);
     assertEquals(1, Practice.networkSize(alice));
   }
+
+  // -----------------------------------------------------------------------
+  // --- Tests for sumReachable(Vertex<Integer> starting) ---
+  // -----------------------------------------------------------------------
+
+  @Test
+  public void testSumReachable_NullInput() {
+    assertEquals(0, Practice.sumReachable(null));
+  }
+
+  @Test
+  public void testSumReachable_SingleNode() {
+    Vertex<Integer> v = new Vertex<>(9);
+    assertEquals(9, Practice.sumReachable(v));
+  }
+
+  @Test
+  public void testSumReachable_SimpleGraph() {
+    // 2 -> 5
+    // |    |
+    // v    v
+    // 3 -> 7
+    Vertex<Integer> v2 = new Vertex<>(2);
+    Vertex<Integer> v5 = new Vertex<>(5);
+    Vertex<Integer> v3 = new Vertex<>(3);
+    Vertex<Integer> v7 = new Vertex<>(7);
+    v2.neighbors.add(v5);
+    v2.neighbors.add(v3);
+    v5.neighbors.add(v7);
+    v3.neighbors.add(v7);
+    assertEquals(17, Practice.sumReachable(v2));
+  }
+
+  @Test
+  public void testSumReachable_WithCycle() {
+    // 1 -> 4 -> 6 -> 1 cycle; each counted once.
+    Vertex<Integer> v1 = new Vertex<>(1);
+    Vertex<Integer> v4 = new Vertex<>(4);
+    Vertex<Integer> v6 = new Vertex<>(6);
+    v1.neighbors.add(v4);
+    v4.neighbors.add(v6);
+    v6.neighbors.add(v1);
+    assertEquals(11, Practice.sumReachable(v1));
+  }
+
+  @Test
+  public void testSumReachable_ComplexGraph() {
+    // Reachable from v3 in helper graph: 3,7,12,34,45,56,78,91,23 => sum 349.
+    Vertex<Integer>[] vertices = createComplexGraph();
+    assertEquals(349, Practice.sumReachable(vertices[0]));
+  }
+
+  // -----------------------------------------------------------------------
+  // --- Tests for allReachableNonNegative(Map<Integer, Set<Integer>>, int) ---
+  // -----------------------------------------------------------------------
+
+  @Test
+  public void testAllReachableNonNegative_NullGraph() {
+    assertFalse(Practice.allReachableNonNegative(null, 1));
+  }
+
+  @Test
+  public void testAllReachableNonNegative_StartingMissing() {
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(1, new HashSet<>(Arrays.asList(2)));
+    graph.put(2, new HashSet<>());
+    assertFalse(Practice.allReachableNonNegative(graph, 99));
+  }
+
+  @Test
+  public void testAllReachableNonNegative_AllNonNegative() {
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(1, new HashSet<>(Arrays.asList(2, 0)));
+    graph.put(2, new HashSet<>(Arrays.asList(3)));
+    graph.put(0, new HashSet<>());
+    graph.put(3, new HashSet<>());
+    assertTrue(Practice.allReachableNonNegative(graph, 1));
+  }
+
+  @Test
+  public void testAllReachableNonNegative_HasNegativeReachable() {
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(5, new HashSet<>(Arrays.asList(7)));
+    graph.put(7, new HashSet<>(Arrays.asList(-2)));
+    graph.put(-2, new HashSet<>());
+    assertFalse(Practice.allReachableNonNegative(graph, 5));
+  }
+
+  @Test
+  public void testAllReachableNonNegative_NegativeUnreachableIgnored() {
+    // Starting at 1 cannot reach -10, so result should still be true.
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(1, new HashSet<>(Arrays.asList(2)));
+    graph.put(2, new HashSet<>());
+    graph.put(-10, new HashSet<>());
+    assertTrue(Practice.allReachableNonNegative(graph, 1));
+  }
+
+  // -----------------------------------------------------------------------
+  // --- Tests for shortestPathLength(Map<Integer, Set<Integer>>, int, int) ---
+  // -----------------------------------------------------------------------
+
+  @Test
+  public void testShortestPathLength_StartingMissing() {
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(1, new HashSet<>(Arrays.asList(2)));
+    graph.put(2, new HashSet<>());
+    assertEquals(-1, Practice.shortestPathLength(graph, 9, 2));
+  }
+
+  @Test
+  public void testShortestPathLength_SelfPath() {
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(4, new HashSet<>(Arrays.asList(5)));
+    graph.put(5, new HashSet<>());
+    assertEquals(0, Practice.shortestPathLength(graph, 4, 4));
+  }
+
+  @Test
+  public void testShortestPathLength_DirectEdge() {
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(1, new HashSet<>(Arrays.asList(2)));
+    graph.put(2, new HashSet<>());
+    assertEquals(1, Practice.shortestPathLength(graph, 1, 2));
+  }
+
+  @Test
+  public void testShortestPathLength_MultipleRoutes() {
+    // Shortest 1->4 is 2 via 1->2->4 or 1->3->4.
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(1, new HashSet<>(Arrays.asList(2, 3)));
+    graph.put(2, new HashSet<>(Arrays.asList(4)));
+    graph.put(3, new HashSet<>(Arrays.asList(4)));
+    graph.put(4, new HashSet<>());
+    assertEquals(2, Practice.shortestPathLength(graph, 1, 4));
+  }
+
+  @Test
+  public void testShortestPathLength_Unreachable() {
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(1, new HashSet<>(Arrays.asList(2)));
+    graph.put(2, new HashSet<>());
+    graph.put(3, new HashSet<>(Arrays.asList(4)));
+    graph.put(4, new HashSet<>());
+    assertEquals(-1, Practice.shortestPathLength(graph, 1, 4));
+  }
+
+  @Test
+  public void testShortestPathLength_Cycle() {
+    // 1->2->3->1 and 3->4. Shortest 1->4 is 3 edges.
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(1, new HashSet<>(Arrays.asList(2)));
+    graph.put(2, new HashSet<>(Arrays.asList(3)));
+    graph.put(3, new HashSet<>(Arrays.asList(1, 4)));
+    graph.put(4, new HashSet<>());
+    assertEquals(3, Practice.shortestPathLength(graph, 1, 4));
+  }
+
+  // -----------------------------------------------------------------------
+  // --- Tests for minValue(Vertex<Integer>) ---
+  // -----------------------------------------------------------------------
+
+  @Test
+  public void testMinValue_NullInput() {
+    assertEquals(Integer.MAX_VALUE, Practice.minValue(null));
+  }
+
+  @Test
+  public void testMinValue_SingleVertex() {
+    Vertex<Integer> a = new Vertex<>(7);
+    assertEquals(7, Practice.minValue(a));
+  }
+
+  @Test
+  public void testMinValue_LinearChain() {
+    // 10 -> 3 -> 15 -> 2
+    Vertex<Integer> a = new Vertex<>(10);
+    Vertex<Integer> b = new Vertex<>(3);
+    Vertex<Integer> c = new Vertex<>(15);
+    Vertex<Integer> d = new Vertex<>(2);
+    a.neighbors.add(b);
+    b.neighbors.add(c);
+    c.neighbors.add(d);
+    assertEquals(2, Practice.minValue(a));
+  }
+
+  @Test
+  public void testMinValue_MinAtStart() {
+    // 1 -> 5 -> 9
+    Vertex<Integer> a = new Vertex<>(1);
+    Vertex<Integer> b = new Vertex<>(5);
+    Vertex<Integer> c = new Vertex<>(9);
+    a.neighbors.add(b);
+    b.neighbors.add(c);
+    assertEquals(1, Practice.minValue(a));
+  }
+
+  @Test
+  public void testMinValue_WithCycle() {
+    // 8 -> 3 -> 6 -> 8 (cycle)
+    Vertex<Integer> a = new Vertex<>(8);
+    Vertex<Integer> b = new Vertex<>(3);
+    Vertex<Integer> c = new Vertex<>(6);
+    a.neighbors.add(b);
+    b.neighbors.add(c);
+    c.neighbors.add(a);
+    assertEquals(3, Practice.minValue(a));
+  }
+
+  @Test
+  public void testMinValue_BranchingGraph() {
+    //     10
+    //    /  \
+    //   4    7
+    //  / \
+    // 2   9
+    Vertex<Integer> a = new Vertex<>(10);
+    Vertex<Integer> b = new Vertex<>(4);
+    Vertex<Integer> c = new Vertex<>(7);
+    Vertex<Integer> d = new Vertex<>(2);
+    Vertex<Integer> e = new Vertex<>(9);
+    a.neighbors.add(b);
+    a.neighbors.add(c);
+    b.neighbors.add(d);
+    b.neighbors.add(e);
+    assertEquals(2, Practice.minValue(a));
+  }
+
+  // -----------------------------------------------------------------------
+  // --- Tests for evenVertices(Vertex<Integer>) ---
+  // -----------------------------------------------------------------------
+
+  @Test
+  public void testEvenVertices_NullInput() {
+    assertEquals(0, Practice.evenVertices(null));
+  }
+
+  @Test
+  public void testEvenVertices_SingleEven() {
+    Vertex<Integer> a = new Vertex<>(4);
+    assertEquals(1, Practice.evenVertices(a));
+  }
+
+  @Test
+  public void testEvenVertices_SingleOdd() {
+    Vertex<Integer> a = new Vertex<>(7);
+    assertEquals(0, Practice.evenVertices(a));
+  }
+
+  @Test
+  public void testEvenVertices_MixedChain() {
+    // 2 -> 5 -> 8 -> 3 -> 6
+    Vertex<Integer> a = new Vertex<>(2);
+    Vertex<Integer> b = new Vertex<>(5);
+    Vertex<Integer> c = new Vertex<>(8);
+    Vertex<Integer> d = new Vertex<>(3);
+    Vertex<Integer> e = new Vertex<>(6);
+    a.neighbors.add(b);
+    b.neighbors.add(c);
+    c.neighbors.add(d);
+    d.neighbors.add(e);
+    assertEquals(3, Practice.evenVertices(a));
+  }
+
+  @Test
+  public void testEvenVertices_AllOdd() {
+    // 1 -> 3 -> 5
+    Vertex<Integer> a = new Vertex<>(1);
+    Vertex<Integer> b = new Vertex<>(3);
+    Vertex<Integer> c = new Vertex<>(5);
+    a.neighbors.add(b);
+    b.neighbors.add(c);
+    assertEquals(0, Practice.evenVertices(a));
+  }
+
+  @Test
+  public void testEvenVertices_WithCycle() {
+    // 2 -> 4 -> 6 -> 2 (cycle)
+    Vertex<Integer> a = new Vertex<>(2);
+    Vertex<Integer> b = new Vertex<>(4);
+    Vertex<Integer> c = new Vertex<>(6);
+    a.neighbors.add(b);
+    b.neighbors.add(c);
+    c.neighbors.add(a);
+    assertEquals(3, Practice.evenVertices(a));
+  }
+
+  @Test
+  public void testEvenVertices_BranchingGraph() {
+    //     1
+    //    / \
+    //   2   3
+    //  / \
+    // 4   5
+    Vertex<Integer> a = new Vertex<>(1);
+    Vertex<Integer> b = new Vertex<>(2);
+    Vertex<Integer> c = new Vertex<>(3);
+    Vertex<Integer> d = new Vertex<>(4);
+    Vertex<Integer> e = new Vertex<>(5);
+    a.neighbors.add(b);
+    a.neighbors.add(c);
+    b.neighbors.add(d);
+    b.neighbors.add(e);
+    assertEquals(2, Practice.evenVertices(a));
+  }
+
+  // -----------------------------------------------------------------------
+  // --- Tests for containsReachable(Map<Integer, Set<Integer>>, int, int) ---
+  // -----------------------------------------------------------------------
+
+  @Test
+  public void testContainsReachable_NullGraph() {
+    assertFalse(Practice.containsReachable(null, 1, 2));
+  }
+
+  @Test
+  public void testContainsReachable_StartingMissing() {
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(1, new HashSet<>(Arrays.asList(2)));
+    graph.put(2, new HashSet<>());
+    assertFalse(Practice.containsReachable(graph, 99, 2));
+  }
+
+  @Test
+  public void testContainsReachable_StartIsTarget() {
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(5, new HashSet<>(Arrays.asList(6)));
+    graph.put(6, new HashSet<>());
+    assertTrue(Practice.containsReachable(graph, 5, 5));
+  }
+
+  @Test
+  public void testContainsReachable_DirectNeighbor() {
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(1, new HashSet<>(Arrays.asList(2)));
+    graph.put(2, new HashSet<>());
+    assertTrue(Practice.containsReachable(graph, 1, 2));
+  }
+
+  @Test
+  public void testContainsReachable_MultipleHops() {
+    // 1 -> 2 -> 3 -> 4
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(1, new HashSet<>(Arrays.asList(2)));
+    graph.put(2, new HashSet<>(Arrays.asList(3)));
+    graph.put(3, new HashSet<>(Arrays.asList(4)));
+    graph.put(4, new HashSet<>());
+    assertTrue(Practice.containsReachable(graph, 1, 4));
+  }
+
+  @Test
+  public void testContainsReachable_Unreachable() {
+    // 1 -> 2, but 3 is disconnected
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(1, new HashSet<>(Arrays.asList(2)));
+    graph.put(2, new HashSet<>());
+    graph.put(3, new HashSet<>());
+    assertFalse(Practice.containsReachable(graph, 1, 3));
+  }
+
+  @Test
+  public void testContainsReachable_WithCycle() {
+    // 1 -> 2 -> 3 -> 1 (cycle), target 3 is reachable
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(1, new HashSet<>(Arrays.asList(2)));
+    graph.put(2, new HashSet<>(Arrays.asList(3)));
+    graph.put(3, new HashSet<>(Arrays.asList(1)));
+    assertTrue(Practice.containsReachable(graph, 1, 3));
+  }
+
+  @Test
+  public void testContainsReachable_CycleTargetNotPresent() {
+    // 1 -> 2 -> 3 -> 1 (cycle), target 99 never reached
+    Map<Integer, Set<Integer>> graph = new HashMap<>();
+    graph.put(1, new HashSet<>(Arrays.asList(2)));
+    graph.put(2, new HashSet<>(Arrays.asList(3)));
+    graph.put(3, new HashSet<>(Arrays.asList(1)));
+    assertFalse(Practice.containsReachable(graph, 1, 99));
+  }
+
+  // -----------------------------------------------------------------------
+  // --- Tests for countVerticesAboveThreshold(Vertex<Integer>, int) ---
+  // -----------------------------------------------------------------------
+
+  @Test
+  public void testCountVerticesAboveThreshold_NullInput() {
+    assertEquals(0, Practice.countVerticesAboveThreshold(null, 5));
+  }
+
+  @Test
+  public void testCountVerticesAboveThreshold_SingleVertexAbove() {
+    Vertex<Integer> a = new Vertex<>(10);
+    assertEquals(1, Practice.countVerticesAboveThreshold(a, 5));
+  }
+
+  @Test
+  public void testCountVerticesAboveThreshold_SingleVertexBelow() {
+    Vertex<Integer> a = new Vertex<>(3);
+    assertEquals(0, Practice.countVerticesAboveThreshold(a, 5));
+  }
+
+  @Test
+  public void testCountVerticesAboveThreshold_SingleVertexEqual() {
+    Vertex<Integer> a = new Vertex<>(5);
+    assertEquals(0, Practice.countVerticesAboveThreshold(a, 5));
+  }
+
+  @Test
+  public void testCountVerticesAboveThreshold_LinearChain() {
+    // 10 -> 7 -> 15 -> 2 -> 8
+    Vertex<Integer> a = new Vertex<>(10);
+    Vertex<Integer> b = new Vertex<>(7);
+    Vertex<Integer> c = new Vertex<>(15);
+    Vertex<Integer> d = new Vertex<>(2);
+    Vertex<Integer> e = new Vertex<>(8);
+    a.neighbors.add(b);
+    b.neighbors.add(c);
+    c.neighbors.add(d);
+    d.neighbors.add(e);
+    // Above threshold 6: 10, 7, 15, 8 = 4 vertices
+    assertEquals(4, Practice.countVerticesAboveThreshold(a, 6));
+  }
+
+  @Test
+  public void testCountVerticesAboveThreshold_BranchingGraph() {
+    // 5 branches to 3 and 12; 3 branches to 1 and 9; 12 branches to 8
+    Vertex<Integer> a = new Vertex<>(5);
+    Vertex<Integer> b = new Vertex<>(3);
+    Vertex<Integer> c = new Vertex<>(12);
+    Vertex<Integer> d = new Vertex<>(1);
+    Vertex<Integer> e = new Vertex<>(9);
+    Vertex<Integer> f = new Vertex<>(8);
+    a.neighbors.add(b);
+    a.neighbors.add(c);
+    b.neighbors.add(d);
+    b.neighbors.add(e);
+    c.neighbors.add(f);
+    // Above threshold 7: 12, 9, 8 = 3 vertices
+    assertEquals(3, Practice.countVerticesAboveThreshold(a, 7));
+  }
+
+  @Test
+  public void testCountVerticesAboveThreshold_WithCycle() {
+    // 20 -> 10 -> 15 -> 20 (cycle)
+    Vertex<Integer> a = new Vertex<>(20);
+    Vertex<Integer> b = new Vertex<>(10);
+    Vertex<Integer> c = new Vertex<>(15);
+    a.neighbors.add(b);
+    b.neighbors.add(c);
+    c.neighbors.add(a);
+    // Above threshold 5: 20, 10, 15 = 3 vertices (counted once due to cycle detection)
+    assertEquals(3, Practice.countVerticesAboveThreshold(a, 5));
+  }
+
+  // -----------------------------------------------------------------------
+  // --- Tests for allReachableEven(Vertex<Integer>) ---
+  // -----------------------------------------------------------------------
+
+  @Test
+  public void testAllReachableEven_NullInput() {
+    assertTrue(Practice.allReachableEven(null));
+  }
+
+  @Test
+  public void testAllReachableEven_SingleEven() {
+    Vertex<Integer> a = new Vertex<>(4);
+    assertTrue(Practice.allReachableEven(a));
+  }
+
+  @Test
+  public void testAllReachableEven_SingleOdd() {
+    Vertex<Integer> a = new Vertex<>(5);
+    assertFalse(Practice.allReachableEven(a));
+  }
+
+  @Test
+  public void testAllReachableEven_AllEvenChain() {
+    // 2 -> 4 -> 6 -> 8
+    Vertex<Integer> a = new Vertex<>(2);
+    Vertex<Integer> b = new Vertex<>(4);
+    Vertex<Integer> c = new Vertex<>(6);
+    Vertex<Integer> d = new Vertex<>(8);
+    a.neighbors.add(b);
+    b.neighbors.add(c);
+    c.neighbors.add(d);
+    assertTrue(Practice.allReachableEven(a));
+  }
+
+  @Test
+  public void testAllReachableEven_OneOddInChain() {
+    // 2 -> 4 -> 5 -> 8
+    Vertex<Integer> a = new Vertex<>(2);
+    Vertex<Integer> b = new Vertex<>(4);
+    Vertex<Integer> c = new Vertex<>(5);
+    Vertex<Integer> d = new Vertex<>(8);
+    a.neighbors.add(b);
+    b.neighbors.add(c);
+    c.neighbors.add(d);
+    assertFalse(Practice.allReachableEven(a));
+  }
+
+  @Test
+  public void testAllReachableEven_BranchingAllEven() {
+    // 2 -> 4, 6; 4 -> 8; 6 -> 10
+    Vertex<Integer> a = new Vertex<>(2);
+    Vertex<Integer> b = new Vertex<>(4);
+    Vertex<Integer> c = new Vertex<>(6);
+    Vertex<Integer> d = new Vertex<>(8);
+    Vertex<Integer> e = new Vertex<>(10);
+    a.neighbors.add(b);
+    a.neighbors.add(c);
+    b.neighbors.add(d);
+    c.neighbors.add(e);
+    assertTrue(Practice.allReachableEven(a));
+  }
+
+  @Test
+  public void testAllReachableEven_BranchingWithOdd() {
+    // 2 -> 4, 3; 4 -> 8; 3 -> 6
+    Vertex<Integer> a = new Vertex<>(2);
+    Vertex<Integer> b = new Vertex<>(4);
+    Vertex<Integer> c = new Vertex<>(3);
+    Vertex<Integer> d = new Vertex<>(8);
+    Vertex<Integer> e = new Vertex<>(6);
+    a.neighbors.add(b);
+    a.neighbors.add(c);
+    b.neighbors.add(d);
+    c.neighbors.add(e);
+    assertFalse(Practice.allReachableEven(a));
+  }
+
+  // -----------------------------------------------------------------------
+  // --- Tests for maxPathSum(Vertex<Integer>) ---
+  // -----------------------------------------------------------------------
+
+  @Test
+  public void testMaxPathSum_NullInput() {
+    assertEquals(0, Practice.maxPathSum(null));
+  }
+
+  @Test
+  public void testMaxPathSum_SingleVertex() {
+    Vertex<Integer> a = new Vertex<>(5);
+    assertEquals(5, Practice.maxPathSum(a));
+  }
+
+  @Test
+  public void testMaxPathSum_LinearChain() {
+    // 2 -> 3 -> 4 -> 5 (sum = 14)
+    Vertex<Integer> a = new Vertex<>(2);
+    Vertex<Integer> b = new Vertex<>(3);
+    Vertex<Integer> c = new Vertex<>(4);
+    Vertex<Integer> d = new Vertex<>(5);
+    a.neighbors.add(b);
+    b.neighbors.add(c);
+    c.neighbors.add(d);
+    assertEquals(14, Practice.maxPathSum(a));
+  }
+
+  @Test
+  public void testMaxPathSum_BranchingPathsChooseLonger() {
+    // 5 -> 3 -> 8 (sum=16) or 5 -> 3 -> 2 (sum=10)
+    Vertex<Integer> a = new Vertex<>(5);
+    Vertex<Integer> b = new Vertex<>(3);
+    Vertex<Integer> c = new Vertex<>(8);
+    Vertex<Integer> d = new Vertex<>(2);
+    a.neighbors.add(b);
+    b.neighbors.add(c);
+    b.neighbors.add(d);
+    assertEquals(16, Practice.maxPathSum(a));
+  }
+
+  @Test
+  public void testMaxPathSum_TwoBranches() {
+    // 10 -> 5, 15; 5 -> 3 (sum=18) and 15 -> 2 (sum=27)
+    Vertex<Integer> a = new Vertex<>(10);
+    Vertex<Integer> b = new Vertex<>(5);
+    Vertex<Integer> c = new Vertex<>(15);
+    Vertex<Integer> d = new Vertex<>(3);
+    Vertex<Integer> e = new Vertex<>(2);
+    a.neighbors.add(b);
+    a.neighbors.add(c);
+    b.neighbors.add(d);
+    c.neighbors.add(e);
+    assertEquals(27, Practice.maxPathSum(a));
+  }
+
+  @Test
+  public void testMaxPathSum_MultipleNeighbors() {
+    // 1 -> 2, 3, 4; 2 -> 5 (sum=8); 3 -> 6 (sum=10); 4 -> 7 (sum=12)
+    Vertex<Integer> a = new Vertex<>(1);
+    Vertex<Integer> b = new Vertex<>(2);
+    Vertex<Integer> c = new Vertex<>(3);
+    Vertex<Integer> d = new Vertex<>(4);
+    Vertex<Integer> e = new Vertex<>(5);
+    Vertex<Integer> f = new Vertex<>(6);
+    Vertex<Integer> g = new Vertex<>(7);
+    a.neighbors.add(b);
+    a.neighbors.add(c);
+    a.neighbors.add(d);
+    b.neighbors.add(e);
+    c.neighbors.add(f);
+    d.neighbors.add(g);
+    assertEquals(12, Practice.maxPathSum(a));
+  }
+
+  @Test
+  public void testMaxPathSum_WithNegativeValues() {
+    // 10 -> 5 -> -3 -> 2 (sum=14) or 10 -> -1 (sum=9)
+    Vertex<Integer> a = new Vertex<>(10);
+    Vertex<Integer> b = new Vertex<>(5);
+    Vertex<Integer> c = new Vertex<>(-3);
+    Vertex<Integer> d = new Vertex<>(2);
+    Vertex<Integer> e = new Vertex<>(-1);
+    a.neighbors.add(b);
+    a.neighbors.add(e);
+    b.neighbors.add(c);
+    c.neighbors.add(d);
+    assertEquals(14, Practice.maxPathSum(a));
+  }
 }
